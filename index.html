@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#ffab91">
+<meta name="robots" content="noindex, nofollow">
+<title>Une surprise pour toi 🌴</title>
+<style>
+  :root{
+    --ink:#17323a; --muted:#5d7780; --card:rgba(255,255,255,.93); --line:#e2edef;
+    --accent:#ff6f61; --sea:#0e8a96;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{background:#7fd3d8}
+  body{
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    color:var(--ink);line-height:1.45;min-height:100vh;min-height:100dvh;
+    display:flex;align-items:center;justify-content:center;
+    padding:max(16px,env(safe-area-inset-top)) 16px max(16px,env(safe-area-inset-bottom));
+    -webkit-tap-highlight-color:transparent;
+  }
+  body::before{content:"";position:fixed;inset:0;z-index:-1;
+    background:linear-gradient(165deg,#ffe0b2 0%,#ffab91 28%,#7fd3d8 68%,#0e8a96 100%)}
+  .card{width:100%;max-width:440px;background:var(--card);border-radius:24px;
+    padding:28px 20px 24px;box-shadow:0 18px 50px rgba(8,60,68,.25)}
+  .screen{animation:in .45s ease both}
+  @keyframes in{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+  h1{font-size:1.6rem;line-height:1.2;margin-bottom:12px}
+  h2{font-size:1.25rem;line-height:1.3;margin-bottom:6px}
+  p{color:var(--muted);margin-bottom:12px}
+  .center{text-align:center}
+  .big{font-size:3.4rem;line-height:1;margin-bottom:12px}
+  .btn{display:block;width:100%;border:0;border-radius:16px;padding:16px;font:inherit;font-weight:700;
+    font-size:1.05rem;background:var(--accent);color:#fff;cursor:pointer;margin-top:10px;
+    box-shadow:0 6px 16px rgba(255,111,97,.35)}
+  .btn:active{transform:scale(.98)}
+  .btn.ghost{background:transparent;color:var(--sea);box-shadow:none;font-weight:600}
+  .top{display:flex;justify-content:space-between;align-items:center;font-size:.85rem;
+    color:var(--muted);margin-bottom:8px;min-height:26px}
+  .back{background:none;border:0;font:inherit;color:var(--sea);cursor:pointer;padding:4px 0}
+  .bar{height:6px;background:var(--line);border-radius:99px;overflow:hidden;margin-bottom:22px}
+  .bar>i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),#ffb74d);
+    border-radius:99px;transition:width .4s ease}
+  .sub{margin-bottom:18px}
+  .answers{display:grid;gap:10px}
+  .answer{display:block;width:100%;text-align:left;font:inherit;font-size:1rem;color:var(--ink);
+    background:#fff;border:2px solid var(--line);border-radius:16px;padding:14px 16px;cursor:pointer;
+    transition:border-color .15s,background .15s,transform .1s}
+  .answer:active{transform:scale(.985)}
+  .answer.picked{border-color:var(--accent);background:#fff1ee}
+  @media (hover:hover){.answer:hover{border-color:#ffc2b8}}
+  .dots{display:inline-flex;gap:6px;margin:18px 0}
+  .dots i{width:10px;height:10px;border-radius:50%;background:var(--accent);animation:pulse 1s infinite ease-in-out}
+  .dots i:nth-child(2){animation-delay:.15s}
+  .dots i:nth-child(3){animation-delay:.3s}
+  @keyframes pulse{0%,80%,100%{transform:scale(.5);opacity:.4}40%{transform:scale(1);opacity:1}}
+  .label{text-transform:uppercase;letter-spacing:.08em;font-size:.75rem;font-weight:700;color:var(--sea);margin-bottom:6px}
+  .result-title{font-size:1.5rem;margin:4px 0 12px}
+  .sign{font-style:italic;color:var(--ink);margin-top:6px}
+  .rank{margin:22px 0 6px;text-align:left}
+  .row{margin-bottom:10px;font-size:.9rem}
+  .row>div:first-child{display:flex;justify-content:space-between;margin-bottom:4px}
+  .track{height:8px;background:var(--line);border-radius:99px;overflow:hidden}
+  .track i{display:block;height:100%;width:0;border-radius:99px;transition:width 1s ease}
+  .petal{position:fixed;top:-10vh;pointer-events:none;z-index:10;animation:fall linear forwards}
+  @keyframes fall{to{transform:translateY(120vh) rotate(540deg)}}
+  @media (prefers-reduced-motion:reduce){.screen{animation:none}.bar>i,.track i{transition:none}}
+</style>
+</head>
+<body>
+<main class="card" id="app" aria-live="polite"></main>
+
+<script>
+// ===================== À PERSONNALISER =====================
+const CONFIG = {
+  prenom: "mon cœur",      // son prénom, ex. "Léa"
+  signature: "Ton chéri",  // ton prénom, affiché à la fin
+};
+// ===========================================================
+
+const EXCURSIONS = {
+  R: { emoji: "🌅", court: "Dîner sur la plage", slug: "diner-plage", couleur: "#ff6f61",
+       profil: "L'âme romantique",
+       titre: "Un dîner en tête-à-tête sur la plage",
+       texte: "Tu as envie de ralentir, de savourer et de profiter de nous deux. Au programme : une table rien que pour nous, les pieds dans le sable, le coucher du soleil, des bougies et le bruit des vagues." },
+  D: { emoji: "🐬", court: "Sortie dauphins", slug: "dauphins", couleur: "#3a86ff",
+       profil: "L'esprit libre du grand large",
+       titre: "Une sortie en mer avec les dauphins",
+       texte: "Tu as soif d'émerveillement et de rencontres. Au programme : départ au lever du jour, cap au large de la côte ouest pour aller à la rencontre des dauphins en pleine mer." },
+  H: { emoji: "🚁", court: "Hélicoptère", slug: "helicoptere", couleur: "#8a5cf6",
+       profil: "L'aventurière des sommets",
+       titre: "Le tour de l'île en hélicoptère",
+       texte: "Toi, tu veux voir les choses en grand. Au programme : l'île entière vue du ciel, ses lagons turquoise, ses montagnes et ses cascades, d'un seul regard." },
+  S: { emoji: "🐠", court: "Snorkeling", slug: "snorkeling", couleur: "#0fa3b1",
+       profil: "L'exploratrice des profondeurs",
+       titre: "Une sortie snorkeling dans le lagon",
+       texte: "Tu as besoin de couper avec le monde et d'explorer. Au programme : masque, tuba, et toi au milieu des poissons multicolores et des coraux du lagon." },
+};
+
+// Chaque réponse donne des points (s) aux excursions : R, D, H, S.
+const QUESTIONS = [
+  { q: "Ton moment préféré de la journée en vacances ?", a: [
+    { t: "Le lever du soleil, quand tout est encore calme", s: { D: 2 } },
+    { t: "La fin de matinée, quand le soleil fait briller l'eau", s: { S: 2 } },
+    { t: "L'après-midi, sous un grand ciel bien dégagé", s: { H: 2 } },
+    { t: "Le coucher du soleil, évidemment", s: { R: 2 } } ] },
+  { q: "Si tu pouvais avoir un super-pouvoir pendant une journée…", a: [
+    { t: "Voler 🕊️", s: { H: 2 } },
+    { t: "Respirer sous l'eau", s: { S: 2 } },
+    { t: "Parler aux animaux", s: { D: 2 } },
+    { t: "Arrêter le temps sur un bon moment", s: { R: 2 } } ] },
+  { q: "La couleur qui te fait le plus rêver ?", a: [
+    { t: "Rose-orangé, comme un ciel de fin de journée", s: { R: 2 } },
+    { t: "Turquoise, presque transparent", s: { S: 2 } },
+    { t: "Bleu profond, celui du grand large", s: { D: 2 } },
+    { t: "Vert émeraude, comme des montagnes tropicales", s: { H: 2 } } ] },
+  { q: "Pendant ces vacances, tu as surtout envie de…", a: [
+    { t: "Te faire chouchouter", s: { R: 2 } },
+    { t: "Avoir le souffle coupé", s: { H: 2 } },
+    { t: "Être émerveillée comme une gamine", s: { D: 2 } },
+    { t: "Te déconnecter complètement du monde", s: { S: 2 } } ] },
+  { q: "Ton téléphone en vacances, c'est plutôt…", a: [
+    { t: "Je mitraille tout, il me faut LA vue parfaite", s: { H: 2 } },
+    { t: "Oublié au fond du sac : je vis le moment", s: { R: 2 } },
+    { t: "Dans une pochette étanche, il me suit partout", s: { S: 2 } },
+    { t: "Caméra prête, au cas où un moment magique surgit", s: { D: 2 } } ] },
+  { q: "Dans l'eau, tu es plutôt…", a: [
+    { t: "Une vraie sirène 🧜‍♀️", s: { S: 2, D: 2 } },
+    { t: "À l'aise, tant que je vois ce qu'il y a autour", s: { S: 1, D: 1 } },
+    { t: "Les pieds dans l'eau, c'est déjà très bien", s: { R: 2, H: 1 } },
+    { t: "Je préfère l'admirer… bien au sec", s: { H: 2, R: 1 } } ] },
+  { q: "Ce qui te fait le plus flipper ?", sub: "Sois honnête 😇", a: [
+    { t: "Le vide", s: { H: -3 } },
+    { t: "Un poisson qui me frôle la jambe", s: { S: -3 } },
+    { t: "Le mal de mer", s: { D: -3 } },
+    { t: "Les moustiques et le sable qui colle", s: { R: -2 } },
+    { t: "Rien du tout, je suis une warrior 💪", s: {} } ] },
+  { q: "La bande-son idéale de ces vacances ?", a: [
+    { t: "Des slows et des chansons d'amour", s: { R: 2 } },
+    { t: "Une musique de film épique", s: { H: 2 } },
+    { t: "Un son très doux, presque le silence", s: { S: 2 } },
+    { t: "Les tubes de l'été, ça doit bouger !", s: { D: 2 } } ] },
+  { q: "Dans un film, la scène qui te fait toujours quelque chose…", a: [
+    { t: "Le baiser au coucher du soleil", s: { R: 2 } },
+    { t: "Le plan vu du ciel qui dévoile un paysage incroyable", s: { H: 2 } },
+    { t: "Le héros qui découvre un monde caché", s: { S: 2 } },
+    { t: "La rencontre inattendue avec un animal sauvage", s: { D: 2 } } ] },
+  { q: "Et pour finir : ton apéro idéal ?", a: [
+    { t: "Champagne, les pieds dans le sable", s: { R: 2 } },
+    { t: "Un cocktail sur le pont d'un bateau", s: { D: 2 } },
+    { t: "Une noix de coco fraîche après la baignade", s: { S: 2 } },
+    { t: "Un verre en terrasse avec vue panoramique", s: { H: 2 } } ] },
+];
+
+// Question bonus, posée uniquement en cas d'égalité (seules les réponses à départager s'affichent).
+const TIEBREAK = {
+  q: "Dernière question, promis 🤞",
+  sub: "Si ce voyage ne devait tenir qu'en un seul mot…",
+  a: { R: "Nous deux", H: "Grandiose", D: "Rencontre", S: "Exploration" },
+};
+
+const app = document.getElementById("app");
+let answers = [];      // index de la réponse choisie, par question
+let orders = [];       // ordre mélangé des réponses, par question
+let tieAnswer = null;  // excursion choisie à la question bonus
+let busy = false;
+
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+function shuffle(n) {
+  const a = [...Array(n).keys()];
+  for (let i = n - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+  return a;
+}
+
+function show(html) {
+  app.innerHTML = '<div class="screen">' + html + "</div>";
+  window.scrollTo(0, 0);
+}
+
+function pick(btn, then) {
+  if (busy) return;
+  busy = true;
+  btn.classList.add("picked");
+  setTimeout(() => { busy = false; then(); }, 300);
+}
+
+function intro() {
+  answers = []; tieAnswer = null;
+  orders = QUESTIONS.map(q => shuffle(q.a.length));
+  show(`<div class="center">
+    <div class="big">🌴</div>
+    <h1>Hello ${esc(CONFIG.prenom)} !</h1>
+    <p>J'ai préparé une petite surprise pour nos vacances à l'île Maurice…</p>
+    <p>Réponds à ${QUESTIONS.length} petites questions, sans trop réfléchir : il n'y a pas de mauvaise réponse 😉</p>
+    <p>À la fin, tu découvriras ce qui t'attend.</p>
+    <button class="btn" id="go">C'est parti ✨</button>
+  </div>`);
+  document.getElementById("go").onclick = () => question(0);
+}
+
+function question(i) {
+  answers.length = i;
+  tieAnswer = null;
+  const q = QUESTIONS[i];
+  show(`<div class="top">${i > 0 ? '<button class="back" id="back">← Retour</button>' : "<span></span>"}<span>${i + 1} / ${QUESTIONS.length}</span></div>
+    <div class="bar"><i style="width:${Math.round(i / QUESTIONS.length * 100)}%"></i></div>
+    <h2>${q.q}</h2>${q.sub ? `<p class="sub">${q.sub}</p>` : '<div class="sub"></div>'}
+    <div class="answers">${orders[i].map(k => `<button class="answer" data-k="${k}">${q.a[k].t}</button>`).join("")}</div>`);
+  if (i > 0) document.getElementById("back").onclick = () => question(i - 1);
+  app.querySelectorAll(".answer").forEach(b => b.onclick = () => pick(b, () => {
+    answers[i] = +b.dataset.k;
+    if (i + 1 < QUESTIONS.length) question(i + 1); else finish();
+  }));
+}
+
+function scores() {
+  const s = { R: 0, D: 0, H: 0, S: 0 };
+  answers.forEach((k, i) => { const pts = QUESTIONS[i].a[k].s; for (const x in pts) s[x] += pts[x]; });
+  if (tieAnswer) s[tieAnswer] += 1;
+  return s;
+}
+
+function finish() {
+  const s = scores();
+  const max = Math.max(...Object.values(s));
+  const top = Object.keys(s).filter(k => s[k] === max);
+  if (top.length > 1 && !tieAnswer) return tiebreak(top);
+  loading(top[0], s);
+}
+
+function tiebreak(keys) {
+  const opts = shuffle(keys.length).map(i => keys[i]);
+  show(`<div class="top"><button class="back" id="back">← Retour</button><span>Bonus</span></div>
+    <div class="bar"><i style="width:100%"></i></div>
+    <h2>${TIEBREAK.q}</h2><p class="sub">${TIEBREAK.sub}</p>
+    <div class="answers">${opts.map(k => `<button class="answer" data-k="${k}">${TIEBREAK.a[k]}</button>`).join("")}</div>`);
+  document.getElementById("back").onclick = () => question(QUESTIONS.length - 1);
+  app.querySelectorAll(".answer").forEach(b => b.onclick = () => pick(b, () => { tieAnswer = b.dataset.k; finish(); }));
+}
+
+function loading(key, s) {
+  const msgs = ["Analyse de tes réponses…", "Calcul du taux de romantisme…", "Consultation de la météo mauricienne…", "Ça y est, j'ai trouvé ! 😏"];
+  show(`<div class="center"><div class="big">🔮</div><h2 id="msg">${msgs[0]}</h2><div class="dots"><i></i><i></i><i></i></div></div>`);
+  let n = 0;
+  const timer = setInterval(() => {
+    n++;
+    if (n < msgs.length) document.getElementById("msg").textContent = msgs[n];
+    else { clearInterval(timer); result(key, s); }
+  }, 900);
+}
+
+function result(key, s) {
+  const e = EXCURSIONS[key];
+  const pos = {};
+  for (const k in s) pos[k] = Math.max(s[k], 0);
+  const total = Object.values(pos).reduce((a, b) => a + b, 0) || 1;
+  const ranking = Object.keys(s).sort((a, b) => s[b] - s[a]);
+  const pcts = {};
+  ranking.forEach(k => pcts[k] = Math.round(pos[k] / total * 100));
+  pcts[key] += 100 - Object.values(pcts).reduce((a, b) => a + b, 0); // total toujours = 100 %
+  show(`<div class="center">
+    <div class="label">Ton profil vacances</div>
+    <div class="big">${e.emoji}</div>
+    <h2>${e.profil}</h2>
+    <p>Ton excursion idéale :</p>
+    <h1 class="result-title">${e.titre}</h1>
+    <p>${e.texte}</p>
+    <p class="sign">Je m'occupe de tout 😘<br>— ${esc(CONFIG.signature)}</p>
+    <div class="rank"><div class="label">Le classement complet</div>
+      ${ranking.map(k => {
+        const pct = pcts[k];
+        return `<div class="row"><div><span>${EXCURSIONS[k].emoji} ${EXCURSIONS[k].court}</span><b>${pct} %</b></div>
+          <div class="track"><i data-w="${pct}" style="background:${EXCURSIONS[k].couleur}"></i></div></div>`;
+      }).join("")}
+    </div>
+    ${navigator.share ? '<button class="btn" id="share">Partager mon résultat</button>' : ""}
+    <button class="btn ghost" id="again">Recommencer</button>
+  </div>`);
+  setTimeout(() => app.querySelectorAll(".track i").forEach(i => i.style.width = i.dataset.w + "%"), 60);
+  const share = document.getElementById("share");
+  if (share) share.onclick = () => navigator.share({ title: "Mon excursion à l'île Maurice", text: `Mon excursion idéale à l'île Maurice : ${e.titre} ${e.emoji}` }).catch(() => {});
+  document.getElementById("again").onclick = intro;
+  rain([e.emoji, "✨", "🌺"]);
+  // Hébergement local : le résultat apparaît dans le terminal du serveur (ligne "GET /resultat-…").
+  fetch("resultat-" + e.slug + ".txt", { cache: "no-store" }).catch(() => {});
+}
+
+function rain(chars) {
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  for (let n = 0; n < 28; n++) {
+    const p = document.createElement("span");
+    p.className = "petal";
+    p.textContent = chars[n % chars.length];
+    p.style.left = Math.random() * 100 + "vw";
+    p.style.fontSize = 16 + Math.random() * 18 + "px";
+    p.style.animationDuration = 3 + Math.random() * 3 + "s";
+    p.style.animationDelay = Math.random() * 1.5 + "s";
+    document.body.appendChild(p);
+    setTimeout(() => p.remove(), 8000);
+  }
+}
+
+intro();
+</script>
+</body>
+</html>
